@@ -2,8 +2,7 @@ services:
   ha-huff-proxy:
     container_name: ha-huff-proxy
     build: .
-    ports:
-      - "8000:8000"
+    network_mode: host
     environment:
       - OUTPUT_DIR=/app/output
     volumes:
