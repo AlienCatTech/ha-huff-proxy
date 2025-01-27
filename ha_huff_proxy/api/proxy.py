@@ -1,12 +1,23 @@
-from fastapi import APIRouter, FastAPI, Request
+import logging
+from fastapi import APIRouter, Request, Response
 import httpx
-from fastapi.responses import StreamingResponse
+
+from ha_huff_proxy.common import is_valid_ipv4
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
-async def handle_proxy_request(request: Request, hostname: str, path: str = ""):
-    # Construct the target URL
-    target_url = f"http://{hostname}/{path}".rstrip("/")
+
+async def handle_proxy_request(
+    request: Request, response: Response, hostname: str, path: str = ""
+):
+    if not is_valid_ipv4(hostname):
+        part = hostname
+        hostname = request.cookies.get("proxy_host")
+        target_url = f"http://{hostname}/{part}/{path}".rstrip("/")
+
+    else:
+        target_url = f"http://{hostname}/{path}".rstrip("/")
 
     # Get the request body and headers
     body = await request.body()
@@ -14,7 +25,8 @@ async def handle_proxy_request(request: Request, hostname: str, path: str = ""):
     headers.pop("host", None)
 
     async with httpx.AsyncClient() as client:
-        response = await client.request(
+        logger.info(f"{request.url} >>>>>>> {target_url}")
+        server_response = await client.request(
             method=request.method,
             url=target_url,
             headers=headers,
@@ -22,10 +34,19 @@ async def handle_proxy_request(request: Request, hostname: str, path: str = ""):
             params=request.query_params,
         )
 
-        return StreamingResponse(
-            response.iter_bytes(),
-            status_code=response.status_code,
-            headers=dict(response.headers),
+        headers = dict(server_response.headers)
+        if "content-encoding" in headers:
+            headers.pop("content-encoding")
+        if "content-length" in headers:
+            headers.pop("content-length")
+
+        if is_valid_ipv4(hostname):
+            headers.setdefault("Set-Cookie", f"proxy_host={hostname}; Path=/")
+
+        return Response(
+            content=server_response.content.decode(),
+            status_code=server_response.status_code,
+            headers=headers,
         )
 
 
@@ -33,13 +54,5 @@ async def handle_proxy_request(request: Request, hostname: str, path: str = ""):
     "/proxy/{hostname}/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
 )
-async def proxy_request(request: Request, hostname: str, path: str):
-    return await handle_proxy_request(request, hostname, path)
-
-
-@router.api_route(
-    "/proxy/{hostname}",
-    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
-)
-async def proxy_request_root(request: Request, hostname: str):
-    return await handle_proxy_request(request, hostname)
+async def proxy_request(request: Request, response: Response, hostname: str, path: str):
+    return await handle_proxy_request(request, response, hostname, path)
