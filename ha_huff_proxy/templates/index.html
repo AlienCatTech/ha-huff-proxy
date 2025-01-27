@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Upload</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='/simple.min.css') }}"
+    />
+  </head>
+  <style>
+    .success {
+      background-color: green;
+    }
+    .error {
+      background-color: red;
+    }
+    .hide {
+      display: none;
+    }
+    .subtitle {
+      color: gray;
+    }
+  </style>
+  <body>
+    <section>
+      <p class="notice {{success}}">{{message}}</p>
+
+      <form action="/upload/" method="post" enctype="multipart/form-data">
+        <h1>File Upload</h1>
+        <p>
+          <label for="filename">File Name:</label>
+          <input type="text" id="filename" name="filename" />
+        </p>
+        <p>
+          <label for="file">Select File:</label>
+          <input type="file" id="file" name="file" required />
+        </p>
+        <button type="submit">Upload</button>
+      </form>
+    </section>
+    <section>
+      <p>Why is this exist</p>
+      <p class="subtitle">
+        The Home Assistant server has a hardcoded maximum payload size. This tool is designed to bypass that limit.
+      </p>
+      <p>Where is my file saved</p>
+      <p class="subtitle">
+        Files are saved to the config/www directory, and they can be accessed in Home Assistant via the URL /local/xxx
+      </p>
+    </section>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "ha-huff-proxy"
+version = "0.1.0"
+description = ""
+authors = ["aliencat <contact@aliencat.dev>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = {extras = ["standard"], version = "^0.115.7"}
+python-dotenv = "^1.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

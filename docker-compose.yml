@@ -1,0 +1,11 @@
+services:
+  ha-huff-proxy:
+    container_name: ha-huff-proxy
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OUTPUT_DIR=/app/output
+    volumes:
+      - config/www:/app/output
+    restart: unless-stopped
